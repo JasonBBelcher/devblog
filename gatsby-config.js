@@ -1,5 +1,19 @@
 module.exports = {
   plugins: [
+    "gatsby-plugin-sharp",
+    {
+      resolve: "gatsby-transformer-remark",
+      options: {
+        plugins: [
+          {
+            resolve: "gatsby-remark-images",
+            options: {
+              maxWidth: 970,
+            },
+          },
+        ],
+      },
+    },
     {
       resolve: `gatsby-theme-blog`,
       options: {},
@@ -7,17 +21,17 @@ module.exports = {
   ],
   // Customize your site metadata:
   siteMetadata: {
-    title: `My Blog Title`,
-    author: `My Name`,
-    description: `My site description...`,
+    title: `Shovels Of Code`,
+    author: `Jason Belcher`,
+    description: `A Blog about coding in JavaScript`,
     social: [
       {
         name: `twitter`,
-        url: `https://twitter.com/gatsbyjs`,
+        url: `http://www.twitter.com/shovelsofcode`,
       },
       {
         name: `github`,
-        url: `https://github.com/gatsbyjs`,
+        url: `https://github.com/JasonBBelcher`,
       },
     ],
   },
