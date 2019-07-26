@@ -14,20 +14,35 @@ when something is returned without knowing the rules of es6 `=>` and object lite
 
 ### Factory example 1
 
-```
-function catFactory (name, hairColor, age, breed) {
+```javascript
+function catFactory(name, hairColor, age, breed) {
   return {
     name: name,
     hairColor: hairColor,
     age: age,
-    breed: breed
+    breed: breed,
   }
 }
 
-const zaphy = catFactory('Zaphy', 'black', 14, 'Bombay');
-const bentley = catFactory('Bentley', 'brown with black stripes', 2, 'american short hair');
-const melissa = catFactory('Melissa', 'white and black', 10, 'american short hair');
-const domino = catFactory('Domino', 'white and black', 10, 'american short hair')
+const zaphy = catFactory("Zaphy", "black", 14, "Bombay")
+const bentley = catFactory(
+  "Bentley",
+  "brown with black stripes",
+  2,
+  "american short hair"
+)
+const melissa = catFactory(
+  "Melissa",
+  "white and black",
+  10,
+  "american short hair"
+)
+const domino = catFactory(
+  "Domino",
+  "white and black",
+  10,
+  "american short hair"
+)
 
 console.log(zaphy.name)
 console.log(bentley.breed)
@@ -54,52 +69,47 @@ A cat will grow 12.5 human years a year! Wow! Can you imagine if we did that? We
 
 ### Factory Example 2
 
-```
-
-function catFactory (name, hairColor, age, breed) {
+```javascript
+function catFactory(name, hairColor, age, breed) {
   function getHumanYears() {
+    let first2years = age * 12.5
+    let beyond2years = 25
 
-    let first2years = age * 12.5;
-    let beyond2years = 25;
-
-    if(age <= 2) {
+    if (age <= 2) {
       return first2years
     } else {
-      return beyond2years + (age * 4);
+      return beyond2years + age * 4
     }
-}
+  }
 
-function getCatDescription() {
-  return `${name} is ${age} years old. This cat has hair that is ${hairColor} and the breed is : ${breed}`
-}
+  function getCatDescription() {
+    return `${name} is ${age} years old. This cat has hair that is ${hairColor} and the breed is : ${breed}`
+  }
 
   return {
     getCatDescription,
-    getHumanYears
+    getHumanYears,
   }
 }
 
-/* console output
+// console output
 
-const bentley = catFactory('Bentley', 'brown with black stripes', 2, 'tabby');
+const bentley = catFactory("Bentley", "brown with black stripes", 2, "tabby")
 bentley.getHumanYears()
 25
 
-const zaphy = catFactory('Zaphy', 'black', 14, 'Bombay');
+const zaphy = catFactory("Zaphy", "black", 14, "Bombay")
 undefined
 zaphy.getHumanYears()
 81
 
 zaphy.getCatDescription()
-"Zaphy is 14 years old. The cat has hair that is black and the breed is : Bombay"
+;("Zaphy is 14 years old. The cat has hair that is black and the breed is : Bombay")
 
 zaphy.age
 undefined
 zaphy.name
 undefined
-
-*/
-
 ```
 
 Poor Zaph is getting to be an old man.
