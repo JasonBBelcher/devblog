@@ -1,0 +1,111 @@
+---
+title: Catting around with Factory Functions
+date: 2019-07-26
+---
+
+## What is a factory function and Why use them?
+
+A factory function is a function which returns an object.
+Factory functions can be very attractive to use in JavaScript in order to avoid the complexities of using classes. This is no excuse to not understand
+how prototypal inheritance and the keywords, "this" and "new" work but it does make your code more immediately understandable.
+
+I'm going to do the examples in es5 because I want to concentrate on factory functions. Using the function keyword and the return keyword tells us explicitly
+when something is returned without knowing the rules of es6 `=>` and object literal syntax.
+
+### Factory example 1
+
+```
+function catFactory (name, hairColor, age, breed) {
+  return {
+    name: name,
+    hairColor: hairColor,
+    age: age,
+    breed: breed
+  }
+}
+
+const zaphy = catFactory('Zaphy', 'black', 14, 'Bombay');
+const bentley = catFactory('Bentley', 'brown with black stripes', 2, 'american short hair');
+const melissa = catFactory('Melissa', 'white and black', 10, 'american short hair');
+const domino = catFactory('Domino', 'white and black', 10, 'american short hair')
+
+console.log(zaphy.name)
+console.log(bentley.breed)
+console.log(melissa.hairColor)
+console.log(domino.breed)
+
+/*
+ console output
+
+ Zaphy
+ american short hair
+ white and black
+ american short hair
+
+*/
+```
+
+## What about methods?
+
+Lets get right to it and show some examples. A code example is always better than me blathering on and on.
+
+Lets make a function method that calculates cat years to human years. A cat grows at an accelerated rate until they are about 2 years old.
+A cat will grow 12.5 human years a year! Wow! Can you imagine if we did that? We would have a bunch of 25 year old babies walking around. LOLZ!
+
+### Factory Example 2
+
+```
+
+function catFactory (name, hairColor, age, breed) {
+  function getHumanYears() {
+
+    let first2years = age * 12.5;
+    let beyond2years = 25;
+
+    if(age <= 2) {
+      return first2years
+    } else {
+      return beyond2years + (age * 4);
+    }
+}
+
+function getCatDescription() {
+  return `${name} is ${age} years old. This cat has hair that is ${hairColor} and the breed is : ${breed}`
+}
+
+  return {
+    getCatDescription,
+    getHumanYears
+  }
+}
+
+/* console output
+
+const bentley = catFactory('Bentley', 'brown with black stripes', 2, 'tabby');
+bentley.getHumanYears()
+25
+
+const zaphy = catFactory('Zaphy', 'black', 14, 'Bombay');
+undefined
+zaphy.getHumanYears()
+81
+
+zaphy.getCatDescription()
+"Zaphy is 14 years old. The cat has hair that is black and the breed is : Bombay"
+
+zaphy.age
+undefined
+zaphy.name
+undefined
+
+*/
+
+```
+
+Poor Zaph is getting to be an old man.
+
+## What just happened?
+
+Why can't we access the cat properties but the methods can? This is due to the magic of closures. whatever variables that are en-"closed" around the factory function are only accessable from inside the function including the functions parameters. This is a way we can enforce private fields inside the factory.
+
+Notice that I only returned the functions from the factory. They magically have access to the variables and parameters but nothing else does. This allows us to set things like getters and setters on our factories that can return those private fields. We have complete control to return as much or as little from the closure inside the returned object.
