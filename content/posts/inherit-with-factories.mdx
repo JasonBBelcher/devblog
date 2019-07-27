@@ -1,0 +1,121 @@
+---
+title: Dragons, Dinosaurs & Factory Function Inheritance
+date: 2019-07-27
+---
+
+### Why use Factory Functions?
+
+[Don't care why. Just show me how](#fun-with-dinosaurs-and-dragons)
+
+Classes have a long history of confusion in the Javascript world. Unlike languages like Java, JavaScript uses [prototypal inheritance.](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Inheritance_and_the_prototype_chain) This model is more like a bunch of wires that are connected to objects. Instantiation creates new objects with methods that are connected to the constructor function which instantiated them. In other traditional languages this is not the case and the class serves only as a blueprint to the objects it creates.
+
+The difference between a blueprint and the actual building is huge! The difference between a JavaScript class and it's child object is not all that different. Many would argue that the traditional class based mental model is completely wrong for JavaScript. Add to this the behavior of `this` keyword which is determined by it's call site rather than where it is defined and you have a recipe for a hot mess.
+
+Instead of using classes you have the option to avoid that mess. As icing on the cake you can have control over what gets inherited from a base factory (class). We do not have to inherit all the properties and methods. That is completely under your control when using factory functions. The next few examples demonstrate how you can compose factory functions. [Having said this, it is not an excuse not to learn JavaScript's powerful prototypal inheritance system.](#note)
+
+## Fun with Dinosaurs and Dragons
+
+Let's start off by making a dinosaur with the intent of making a Dragon! Dinosaurs poo, bite, walk and run. Lets make a factory that does those actions.
+
+```javascript
+function Dinosaur(name) {
+  function poo() {
+    console.log(`${name} poo poos.`)
+  }
+  function bite() {
+    console.log(`${name} bites and chomps!`)
+  }
+  function walk() {
+    console.log(`${name} walks.`)
+  }
+  function run() {
+    console.log(`${name} runs.`)
+  }
+
+  return { poo, bite, walk, run }
+  // we could just as easily return only one of those methods if we wanted.
+}
+
+const barney = Dinosaur("Barney")
+
+barney.run() // Barney runs.
+barney.bite() // Barney bites and chomps!
+barney.poo() // Barney poo poos.
+barney.walk() // Barney walks
+```
+
+## Inheritance
+
+Dragons are magical so they poop rainbows. Lets override the poo() method by only destructuring `bite`, `walk` and `run` from the Dinosaur function and writing a new `poo()` method.
+
+```javascript
+function Dragon(name) {
+  const { bite, walk, run } = Dinosaur(name)
+
+  // works like an overide method on a class
+  function poo() {
+    console.log(`${name} poos rainbows and confetti`)
+  }
+  function breathFire() {
+    console.log(`${name} breathes fire and roasts you! `)
+  }
+  return { breathFire, bite, poo }
+}
+
+const xerxesTheDragon = Dragon("Xerxes")
+xerxesTheDragon.bite() // Xerxes bites and chomps!
+xerxesTheDragon.breathFire() // Xerxes breathes fire and roasts you!
+xerxesTheDragon.poo() // Xerxes poos rainbows and confetti
+xerxesTheDragon.walk() // Xerxes walks.
+```
+
+We can also use [Object.assign](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign) to inherit all fields and methods as we would with classes. Object.assign will merge all properties together into one object. We can also take the FlyingDinosaur and compose it into a FlyingDragon.
+
+```javascript
+function FlyingDinosaur(name) {
+  const proto = Dinosaur(name)
+  function fly() {
+    console.log(`${name} flaps its wings and takes off into the air!`)
+  }
+  return Object.assign({}, proto, { fly })
+}
+
+function FlyingDragon(name) {
+  const { fly } = FlyingDinosaur(name)
+  const proto = Dragon(name)
+
+  return Object.assign({}, proto, { fly })
+}
+
+const PuffyD = FlyingDragon("Puff the Magic Dragon")
+PuffyD.bite() // Puff the Magic Dragon bites and chomps!
+PuffyD.fly() // Puff the Magic Dragon flaps its wings and takes off into the air!
+PuffyD.poo() // Puff the Magic Dragon poos rainbows and confetti
+```
+
+So in this example we have a base class (factory) called Dinosaur which is inherited by the FlyingDinosaur class (factory) which is then inherited by the FlyingDragon class (factory). In real code this would probably be unwise to have too many levels of nesting. It's just a demonstration of the flexiblity of using factory functions.
+
+### Pros
+
+You can achieve inheritance without ever touching classes or prototypes in JavaScript. This can be a simple way to structure you programs without the confusion associated with prototypal inheritance.
+
+- Field property and method privacy is easy to achieve. You do not need to use special `obj._privateField` syntax because the consumer truly cannot reach fields you do not return due to the magic of closure.
+
+- `this` keyword behaves normally. No need for `call()` `apply()` or `bind()` There is no need to reassign the value of `this`. Instead it always refers to the object on the left hand side of the dot as it normally would in JavaScript.
+  **Another way to say it is that `this` is determined by the call site where it is invoked and not where it is defined.**
+
+- no need to remember to use the `new` keyword when instantiating objects from it.
+
+### Cons
+
+- It's not as memory efficient because you are copying function methods into the objects you create. Prototype methods are never copied but rather the `this` context changes depending on the object you call it on.
+
+If you have a million objects with a method `getState()` then what you have is a method hanging off the parent class. When `getState()` is called, the instantiated object will simply walk up the prototype chain until it finds it on the parent then it will call `getState()` using the `this` context of the instantiated object. Conversely, if you use factory functions and you have 6 methods for each created object then you would have 6 methods \* 1000000 returned objects = 6 million methods defined!
+
+[here is a more in depth article that explains the pros & cons of factory functions vs. constructors](https://ericleads.wordpress.com/2013/01/05/javascript-constructor-functions-vs-factory-functions/)
+
+### Note
+
+**es6 classes are widely used in JavaScript code today and you should learn them. The syntax has improved dramatically. Factory functions are a nice thing to have in your programmer toolbelt but is by no means an excuse not to bother understanding how Javascript [prototypal inheritance](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Inheritance_and_the_prototype_chain) works under the hood.**
+
+[Back to Top](#why-use-factory-function?)
