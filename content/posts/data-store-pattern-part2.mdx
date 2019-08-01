@@ -1,0 +1,168 @@
+---
+title: Let's Create a Data Storage Library Using a Factory - Part 2
+date: 2019-07-31
+---
+
+## UPDATE AND DELETE
+
+[skip to the code](#enforce-the-shape-of-data)
+
+Last time we discussed how to CREATE and READ records from our data storage factory. Today we explore UPDATE & DELETE.
+
+In order to change the data after creation we need to code up an update method. We also need to make sure that when updating we do not add extra properties that break our contract with the interface we defined earlier. What is an interface? In this context it is simply the shape of the objects we want to store.
+
+Lets define a function that enforces the interface for updates and patches. We will have to do this one in a different way because we want to be able to merge one or all properties from the interface. Object.keys() is used to get all the properties currently on the record. Object.keys() is a handy way of converting property names on an object into an array of string values for reference.
+Next loop over each interface prop and check that each key of the passed in record matches an interface property using includes().
+
+```javascript
+Object.keys({key1: 'test1', key2: 'test2', key3: 'test3}) returns ['key1', 'key2', 'key3']
+
+keysInRecord.includes(prop)
+keysInRecord.indexOf(prop) > -1
+```
+
+[Array.prototype.indexOf()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf) or [Array.prototype.includes()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/includes) would yield the same results but I like the more semantic includes() method.
+
+---
+
+### Enforce the Shape of Data
+
+```javascript
+// used on updates so that partial updates (patches) can be made
+
+function conformToInterface(props, record) {
+  // make sure the record is an object and is not null
+  if (typeof record === "object" && record !== null) {
+    let checkedRecord = {}
+    // get all the keys in it
+    const keysInRecord = Object.keys(record)
+    // loop over the interface
+    props.forEach(prop => {
+      // check on each iteration that the keys in the record
+      // match the interface props
+      if (keysInRecord.includes(prop)) {
+        checkedRecord[prop] = record[prop]
+      }
+    })
+    // return the record less any extra properties that don't belong
+    return checkedRecord
+  }
+}
+```
+
+---
+
+## Update by Id
+
+The update method takes in an id and a partial record. It only has to include at least one of the properties defined in the interface. [Object.assign()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign) is used to merge the properties of the matched record with the updatedRecord object passed into the method.
+
+```javascript
+function findByIdAndUpdate(id, updatedRecord) {
+  let updatedR = null
+  // check if id was passed in
+  if (id) {
+    // check if an updated record was passed in
+    if (updatedRecord) {
+      // loop over dataset and for each record we check against the id
+      // passed in with the record.id of current iteration
+      dataset.forEach(r => {
+        if (r.id == id) {
+          // use the interface checking function to strip out
+          // properties that do not belong
+          updatedR = conformToInterface(
+            interfaceProps,
+            // Merge current record with the updated record
+            // This allows passing one or more properties
+            // without losing any properties that
+            // may have been left off the updated record.
+
+            Object.assign({}, r, updatedRecord)
+          )
+        }
+      })
+
+      return updatedR
+    } else {
+      return { error: "no data provided to update record." }
+    }
+  } else {
+    return { error: "no id provided for lookup" }
+  }
+}
+
+// example usage
+
+const someData = // data from an api maybe
+
+/*
+// example object that would be part of the someData array
+
+{
+  id: 12235459234,
+  first_name: "Peter",
+  last_name: "Parker",
+  age: 27,
+  gender: male,
+  email: "peterparker@gmail.com"
+}
+
+*/
+
+const interfaceProps = ["first_name", "last_name", "email", "gender", "age"]
+
+const ds = dataStore(someData, interfaceProps);
+ds.findByIdAndUpdate(12235459234,
+{
+ email: "peterparker@marvel.com",
+ age: 28,
+ junkdata: "this won't be included",
+ junk23: "this won't be included either"})
+/*
+{
+  id: 12235459234,
+  first_name: "Peter",
+  last_name: "Parker",
+  age: 28,
+  gender: male,
+  email: "peterparker@marvel.com"
+}
+*/
+
+```
+
+---
+
+Only the properties that we want to change need be passed into the method. Additionally any junk properties would be removed during the update.
+
+---
+
+## Delete by Id
+
+The delete method takes in an id and loops over the dataset and on each iteration
+the record.id is checked against the id passed in and if it matches use the [splice](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/splice) method to remove the record at the current index. If no id is passed in, return an error. If the id is not found, return null.
+
+```javascript
+function deleteById(id) {
+  let record = null
+  if (id) {
+    dataset.forEach((r, i) => {
+      if (r.id == id) {
+        dataset.splice(i, 1)
+        record = r
+      }
+    })
+    // returns either null if no id is matched or returns the record to deleted
+    return record
+  } else {
+    return { error: "please provide an id." }
+  }
+}
+```
+
+---
+
+That covers C.R.U.D for our data store factory. Part 3 will get deeper into writing some convenience methods for the data store factory. After that I will demo it's use to build a simple web app with a view. Stay tuned!
+
+---
+
+**Why am I not using map, filter or reduce? Because when I first started learning javascript the examples that contained them were confusing. I want to expose each step in explicit detail for easy understanding. I read some tutorials back when I was learning that were written just like this and it helped me tremendously.**
