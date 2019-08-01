@@ -164,7 +164,7 @@ const arr4 = [
   { key1: "test15", key2: "test16" },
 ]
 
-combinedObjects = reduce(
+reducedDownToStrings = reduce(
   arr4,
   (acc, obj) => {
     acc.push(obj.key1)
@@ -173,7 +173,7 @@ combinedObjects = reduce(
   []
 )
 
-console.log(combinedObjects)
+console.log(reducedDownToStrings)
 
 /* output
 
