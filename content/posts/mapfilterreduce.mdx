@@ -1,0 +1,288 @@
+---
+title: Map, Filter, and Reduce
+date: 2019-07-31
+---
+
+## Fuctional Programming.
+
+One of the hardest things to wrap your head around when you begin learning to program is functional programming. I do not consider myself a functional programmer by any stretch of the imagination. Functional programming is a very deep subject filled with [lambda](https://en.wikipedia.org/wiki/Lambda_calculus) calculas. I'm no expert on that stuff. I leave all of that for people much smarter than myself. I digress. This shouldn't keep the pragmatic programmer from putting some of the basics in the toolbox. As always, if we build it, understanding will come.
+
+---
+
+## Map
+
+Map is probably the easier method to understand out of the three. Here is what map does quite literaly if you just took the imperative programming approach.
+
+```javascript
+function multiplyBy2(arr) {
+  const newArr = []
+
+  for (let i = 0; i < arr.length; i += 1) {
+    newArr.push(arr[i] * 2)
+  }
+
+  return newArr
+}
+
+console.log(multiplyBy2([1, 2, 3, 4, 5, 6]))
+
+// [ 2, 4, 6, 8, 10, 12 ]
+```
+
+---
+
+There is nothing wrong with this approach. It's just not flexible at all. You can't use this to do anything but multiply an arr of values by 2. It's cemented in stone and has limited use-case scenerios.
+
+Instead of a hard coded implementation we can use a callback as an argument. Inside this callback we write our own function which can do any kind of transform like concatenation, arithmetic, or even manipulation of object key values.
+
+## Map Implementation
+
+```javascript
+// implement map
+
+function map(array, cb) {
+  let i
+  let total = []
+  for (i = 0; i < array.length; i += 1) {
+    total.push(cb(array[i]))
+  }
+  return total
+}
+```
+
+Lets test it out!
+
+```javascript
+const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+const doubled = map(arr, item => {
+  return item * 2
+})
+console.log(doubled)
+
+// [2, 4, 6, 8, 10, 12, 14, 16, 18, 20 ]
+```
+
+This is a vastly simplified implementation and I'd always use the map version that exists on the [Array.prototype.map()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map)
+
+```javascript
+const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+const doubled = arr.map(item => {
+  return item * 2
+})
+console.log(doubled)
+
+// [2, 4, 6, 8, 10, 12, 14, 16, 18, 20 ]
+```
+
+---
+
+## Filter Implementation
+
+Filter also takes in a callback function and expects there to be some kind of condition to be checked inside. The current index of the array is passed into the callback and the callback handles the details of what to test. If the result of the callback function is truthy then filter pushs on to a new array which gets returned once the last index is reached.
+
+```javascript
+// implement filter function
+
+function filter(array, cb) {
+  let i
+  let filtered = []
+
+  for (i = 0; i < array.length; i += 1) {
+    if (cb(array[i])) {
+      filtered.push(array[i])
+    }
+  }
+  return filtered
+}
+```
+
+Lets test out the filter implementation now.
+
+```javascript
+const arr2 = [
+  { name: "Bently", age: 2 },
+  { name: "Zaphy", age: 12 },
+  { name: "Domino", age: 10 },
+  { name: "Melissa", age: 10 },
+]
+
+const ageGreaterThanFive = filter(arr2, r => {
+  return r.age > 5
+})
+
+console.log(ageGreaterThanFive)
+
+// [{ name: "Zaphy", age: 12 }, { name: "Domino", age: 11 }, {name: "Melissa", age: 11}]
+```
+
+Of course you could do this imperatively without regard for reuse. Here is an example of the exact same functionality.
+
+```javascript
+function getAgeGreaterThan5(arr2) {
+  let i
+  let newArr = []
+  for (i = 0; i < arr2.length; i += 1) {
+    if (arr2[i].age > 5) {
+      newArr.push(arr2[i])
+    }
+  }
+}
+```
+
+Again notice that the function has some hard coded business logic inside. It will never be able to be used for anything else aside from checking if a cat is older than 5 years old. Not very useful I would say. If you code like this you are asking for a ton of duplication in your code base.
+
+## Reduce Implementation
+
+Reduce is usually the hardest to grasp. It was the very last functional method I fully understood. It is also the most flexible of the three but often gets avoided due to it being a bit of an odd duck.
+
+```javascript
+function reduce(array, cb, accumulator) {
+  let i
+  for (i = 0; i < array.length; i += 1) {
+    if (!accumulator) {
+      accumulator = array[i]
+    }
+    accumulator = cb(accumulator, array[i])
+  }
+  return accumulator
+}
+```
+
+So what is happening here? What is this strange thing? Think of the accumulator as a sum variable. If the accumulator is not passed to the reduce function we simply load in the first item of the array. If we did pass in an accumulator we can either pass in a number or an empty array for instance. Lets do that because most of the tutorials on reduce out there really never cover anything over than summing a bunch of numbers together. This is rarely how we use the method in real projects. Usually we are manipulating a collection (array of objects) coming from a rest api of some sort.
+
+```javascript
+const arr4 = [
+  { key1: "test1", key2: "test2" },
+  { key1: "test3", key2: "test4" },
+  { key1: "test5", key2: "test6" },
+  { key1: "test7", key2: "test8" },
+  { key1: "test9", key2: "test10" },
+  { key1: "test11", key2: "test12" },
+  { key1: "test13", key2: "test14" },
+  { key1: "test15", key2: "test16" },
+]
+
+combinedObjects = reduce(
+  arr4,
+  (acc, obj) => {
+    acc.push(obj.key1)
+    return acc
+  },
+  []
+)
+
+console.log(combinedObjects)
+
+/* output
+
+[ 'test1',
+  'test3',
+  'test5',
+  'test7',
+  'test9',
+  'test11',
+  'test13',
+  'test15' ]
+
+*/
+```
+
+---
+
+Magic! Reduce is a swiss army knife of sorts. It can do the jobs of map and filter combined. It's not just for summing some arithmetic.
+
+Now that we have learned about map, filter and reduce let's use them all together like the combined team of Avengers or X-men.
+
+We will grab a [collection of superheroes from marvel and dc](https://gist.github.com/mariodev12/a923f2b651a005ca3ca7f851141efcbc) so we can have a nice data set to work with. First I'll use the built in methods that are built into javascript itself. After that I'll use the simple function implementation from above.
+
+```javascript
+
+
+const heroes = [{...}];
+
+// using the methods on the Array.prototype
+
+// when using the built in array methods we can chain them all together.
+// The result of the previous method becomes the input array of the next in the chain. Chaining methods is a subject for another day.
+
+superheroNamesOfMarvel = heroes
+  .map(hero => {
+    return { name: hero.superhero, publisher: hero.publisher };
+  })
+  .filter(hero => {
+    return hero.publisher == "Marvel Comics";
+  })
+  .reduce((acc, curr) => {
+    acc.push(curr.name);
+    return acc;
+  }, []);
+
+// using the function implementations
+
+// Using map to include a reduced set of properties on each object.
+
+let superheroNamesOfDC = map(heroes, hero => {
+  return { name: hero.superhero, publisher: hero.publisher };
+});
+
+// Using filter to only include heroes from DC
+superheroNamesOfDC = filter(superheroNamesOfDC, hero => {
+  return hero.publisher == "DC Comics";
+});
+
+// using reduce to reduce the data set to a simple list of strings consisting of the names
+
+superheroNamesOfDC = reduce(
+  superheroNamesOfDC,
+  (acc, curr) => {
+    acc.push(curr.name);
+    return acc;
+  },
+  []
+);
+
+
+console.log(superheroNamesOfDC);
+console.log(superheroNamesOfMarvel);
+
+// outputs
+
+  // list of DC superheroes
+
+[ 'Batman',
+  'Superman',
+  'Flash',
+  'Green Lantern',
+  'Green Arrow',
+  'Wonder Woman',
+  'Martian Manhunter',
+  'Robin/Nightwing',
+  'Blue Beetle',
+  'Black Canary' ]
+
+// list of marvel superheroes
+
+[ 'Spider Man',
+  'Captain America',
+  'Iron Man',
+  'Thor',
+  'Hulk',
+  'Wolverine',
+  'Daredevil',
+  'Hawkeye',
+  'Cyclops',
+  'Silver Surfer' ]
+
+```
+
+---
+
+Look at that! Now go forth and play with some data!
+
+### List of resources to learn more
+
+[funfunfunction](https://www.youtube.com/channel/UCO1cgjhGzsSYb1rsB4bFe4Q)
+
+[Blog post about realistic use of map, filter & reduce](https://www.taniarascia.com/real-world-examples-of-map-filter-and-reduce-in-javascript/)
