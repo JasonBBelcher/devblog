@@ -42,11 +42,11 @@ Instead of a hard coded implementation we can use a callback as an argument. Ins
 
 function map(array, cb) {
   let i
-  let total = []
+  let mapped = []
   for (i = 0; i < array.length; i += 1) {
-    total.push(cb(array[i]))
+    mapped.push(cb(array[i]))
   }
-  return total
+  return mapped
 }
 ```
 
@@ -150,7 +150,7 @@ function reduce(array, cb, accumulator) {
 }
 ```
 
-So what is happening here? What is this strange thing? Think of the accumulator as a sum variable. If the accumulator is not passed to the reduce function we simply load in the first item of the array. If we did pass in an accumulator we can either pass in a number or an empty array for instance. Lets do that because most of the tutorials on reduce out there really never cover anything over than summing a bunch of numbers together. This is rarely how we use the method in real projects. Usually we are manipulating a collection (array of objects) coming from a rest api of some sort.
+So what is happening here? What is this strange thing? Think of the accumulator as a sum variable. If the accumulator is not passed to the reduce function we simply load in the first item of the array. If we did pass in an accumulator we can either pass in a number or an empty array for instance. Lets do that because most of the tutorials on reduce out there really never cover anything other than summing a bunch of numbers together. This is rarely how we use the method in real projects. Usually we are manipulating a collection (array of objects) coming from a rest api of some sort.
 
 ```javascript
 const arr4 = [
