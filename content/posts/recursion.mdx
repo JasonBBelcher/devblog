@@ -61,7 +61,7 @@ In theory a recursive function like this with no base case will run forever. Giv
 we end up blowing the stack. Knowing how the execution stack works is essential
 to understanding recursion. Wait!? What is a base case and an execution stack?
 
-Glad you asked! A base case is some kind of condition that when met breaks the cicle of adding to the execution stack. Without the base case
+Glad you asked! A base case is some kind of condition that when met breaks the cycle of adding to the execution stack. Without the base case
 we will always blow the stack as demonstrated above. The execution stack is a data structure that is FIFO. First in first out. When a function
 is executed the function is pushed to the top of the stack. When the base case is reached each call of the function is popped off the stack starting
 with the last called function context. This function context contains details about the execution of a function - like control flow & variables.
