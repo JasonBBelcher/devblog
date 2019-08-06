@@ -128,7 +128,7 @@ The `(4)` value in parantheses are the values that are in context for that execu
 The `<----` arrow indicates the return value being returned from previous execution stack.
 
 ```javascript
-/*
+
 
 recurse until we hit the base case
  stack # 1
@@ -169,7 +169,7 @@ now the javascript engine pops off the stack and calculates
 the results
 
 return 1
-stack # 4
+//stack # 4
 function sumRecursive(1) {
   if (2 == 1) {
     return 1;
@@ -179,7 +179,7 @@ function sumRecursive(1) {
 }
 pop() stack # 4
 
-stack # 3
+// stack # 3
 function sumRecursive(2) {
   if (2 == 1) {
     return 1;
@@ -189,7 +189,7 @@ function sumRecursive(2) {
 }
 pop() stack # 3
 
-stack # 2
+//stack # 2
 function sumRecursive(3) {
   if (2 == 1) {
     return 1;
@@ -200,7 +200,7 @@ function sumRecursive(3) {
 
 pop() stack # 2
 
-stack # 1
+//stack # 1
 function sumRecursive(4) {
   if (2 == 1) {
     return 1;
@@ -210,7 +210,7 @@ function sumRecursive(4) {
 }
 pop stack # 1
 
-*/
+
 ```
 
 ---
