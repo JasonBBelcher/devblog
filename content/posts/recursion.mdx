@@ -1,0 +1,224 @@
+---
+title: Recursion
+date: 2019-08-05
+---
+
+## In order to understand recursion you must first understand recursion
+
+When I asked someone to explain it to me the above title was repeated back to me with a snicker and not much else.
+Honestly I thought the person was being a real smart ass and it wasn't at all helpful at the time. So what is a recursive function?
+Simply put, a recursive function is any function that calls itself and is described in terms of itself. So with this incomplete definition we could do the following.
+
+```javascript
+function dontRunMe() {
+  console.log("To infinity and beyond!!")
+  dontRunMe()
+}
+
+/*
+
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+To infinity and beyond!!
+RangeError: Maximum call stack size exceeded
+    at process.get [as domain] (domain.js:43:16)
+    at new TickObject (internal/process/next_tick.js:238:29)
+    at process.nextTick (internal/process/next_tick.js:267:17)
+    at onwrite (_stream_writable.js:452:15)
+    at WriteStream.Socket._writeGeneric (net.js:777:5)
+    at WriteStream.Socket._write (net.js:787:8)
+    at doWrite (_stream_writable.js:396:12)
+    at writeOrBuffer (_stream_writable.js:382:5)
+    at WriteStream.Writable.write (_stream_writable.js:290:11)
+    at WriteStream.Socket.write (net.js:711:40)
+>
+
+*/
+```
+
+---
+
+In theory a recursive function like this with no base case will run forever. Given that a computers memory space is finite,
+we end up blowing the stack. Knowing how the execution stack works is essential
+to understanding recursion. Wait!? What is a base case and an execution stack?
+
+Glad you asked! A base case is some kind of condition that when met breaks the cicle of adding to the execution stack. Without the base case
+we will always blow the stack as demonstrated above. The execution stack is a data structure that is FIFO. First in first out. When a function
+is executed the function is pushed to the top of the stack. When the base case is reached each call of the function is popped off the stack starting
+with the last called function context. This function context contains details about the execution of a function - like control flow & variables.
+
+let's take what we know so far and make a tickingBomb function for fun.
+
+```javascript
+function tickingBomb(num) {
+  if (num == 0) {
+    return
+  } else {
+    console.log(num)
+    setTimeout(() => {
+      return tickingBomb(num - 1)
+    }, 1000)
+  }
+}
+
+tickingBomb(10)
+
+/*
+10
+9
+8
+7
+6
+5
+4
+3
+2
+1
+Boom!
+
+*/
+```
+
+---
+
+When any recursive function is first called it runs through each recursive call adding to the stack as it goes. When it reaches the base case it then unfolds
+returning the base case return value first then it calculates each function call after that with the returned values of each previous function call. I like to think of it as
+walking up the stairs and then back down the stairs to get the calculated results.
+
+Lets get into another example to get a better understanding
+
+```javascript
+// this function sums whatever number you give it with each number below it decremented by one
+
+function sumRecursive(n) {
+  if (n == 1) {
+    return 0
+  } else {
+    return n + sumRecursive(n - 1)
+  }
+}
+
+sumRecursive(4) // 4 + 3 + 2 + 1
+```
+
+---
+
+This isn't actual code. I'm trying to make what is happening behind the scenes visual for better
+understanding. I'm replacing the parameters with the value it will have at each function call.
+The `(4)` value in parantheses are the values that are in context for that execution stack.
+The `<----` arrow indicates the return value being returned from previous execution stack.
+
+```javascript
+/*
+
+recurse until we hit the base case
+ stack # 1
+function sumRecursive(4) {
+  if (4 == 1) {
+    return 1;
+  } else {
+    return (4) + sumRecursive(4 - 1);
+  }
+}
+stack # 2
+function sumRecursive(3) {
+  if (3 == 1) {
+    return 1;
+  } else {
+    return (3) + sumRecursive(3 - 1);
+  }
+}
+stack # 3
+function sumRecursive(2) {
+  if (2 == 1) {
+    return 1;
+  } else {
+    return (2) + sumRecursive(2 - 1);
+  }
+}
+stack # 4
+function sumRecursive(1) {
+  if (1 == 1) {
+    return (1);
+  } else {
+    // never reached.  we hit base case
+
+  }
+}
+
+now the javascript engine pops off the stack and calculates
+the results
+
+return 1
+stack # 4
+function sumRecursive(1) {
+  if (2 == 1) {
+    return 1;
+  } else {
+    // never reached
+  }
+}
+pop() stack # 4
+
+stack # 3
+function sumRecursive(2) {
+  if (2 == 1) {
+    return 1;
+  } else {
+    return 2 +  (1) <--- sumRecursive(2 - 1);
+  }
+}
+pop() stack # 3
+
+stack # 2
+function sumRecursive(3) {
+  if (2 == 1) {
+    return 1;
+  } else {
+    return 3 + (3) <--- sumRecursive(3 - 1);
+  }
+}
+
+pop() stack # 2
+
+stack # 1
+function sumRecursive(4) {
+  if (2 == 1) {
+    return 1;
+  } else {
+    return 4 + (6) <--- sumRecursive(4 - 1);
+  }
+}
+pop stack # 1
+
+*/
+```
+
+---
+
+I hope these simple examples of recursion helped you grasp what is going on. One thing you can do is open a debugger, set a break point
+and watch what happens to the execution stack as it recurses. My [old wordpress blog post](https://jasonbbelcher.wordpress.com/2017/01/22/what-to-do-when-you-fail-an-algorithm-challenge/) has a bit about how to use the chrome debugger for
+better understanding algorithms.
+
+- [more examples of recursion in the gist this article was made from](https://gist.github.com/JasonBBelcher/73bea32192f7849fcf642d7046fbfa11)
+- [in-depth article on recursion](https://javascript.info/recursion)
+- [in-depth article on execution stack](https://blog.bitsrc.io/understanding-execution-context-and-execution-stack-in-javascript-1c9ea8642dd0)
