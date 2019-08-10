@@ -1,0 +1,159 @@
+---
+title: Webpage Scraping and Recursion
+date: 2019-08-10
+---
+
+## Walk down the stairs with recursion.
+
+I presented myself a challenge the other day. That challenge is to be able to scrape any webpage for the number of times a phrase
+or word is used.
+
+The DOM is a tree of nodes. We can traverse down it using recursion until we hit a node that returns null and then stop. That will be our base case.
+The following example is a trivial example. It does however resemble one branch of the DOM tree we need to travel down in order to discover words and
+phrases. Try it out and watch how each call to the recursive function adds to the execution stack. Then notice that after it reaches null (base case) it pops off
+the stack until finally after the stack is empty it will return null and fire off the console.log that is embedded in the base case conditional.
+
+### Simplified DOM Like Traversal Example
+
+```javascript
+// Simple recursion example that walks down a bunch of nested objects till it finds a null value.
+
+const parentNode = {
+  value: {
+    node: {
+      value: {
+        node: {
+          value: {
+            node: {
+              value: {
+                node: {
+                  value: {
+                    node: {
+                      value: {
+                        node: {
+                          value: {
+                            node: {
+                              value: null,
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+}
+
+function walkitDown(node) {
+  debugger
+  let value = node.value
+  if (value === null) {
+    console.log("you found mr. null!")
+    return null
+  }
+  if (typeof value === "object" && value !== null) {
+    return walkitDown(value.node)
+  }
+}
+
+walkitDown(parentNode)
+
+// "You found mr. null!"
+```
+
+---
+
+Try copy pasting this code into the console in your chrome browser. Watch what happens on each step. Other-wise you can watch this
+helpful animated gif of the debugger.
+
+<div style="position:relative; padding-bottom:calc(62.50% + 44px)">
+  <iframe
+    src="https://gfycat.com/ifr/SparklingBaggyIguana"
+    frameborder="0"
+    scrolling="no"
+    width="100%"
+    height="100%"
+    style="position:absolute;top:0;left:0;"
+    allowfullscreen
+  />
+</div>
+---
+
+### DOM traversal
+
+We can traverse the DOM using the same technique from above but a little digging needs done first to find out what properties
+to use. The DOM is a tree so there will be siblings and child nodes. Lets google that real
+quick. I'm looking for any properties that eventually become null. We will check against null to short circuit the recursion.
+
+[Node.firstChild](https://developer.mozilla.org/en-US/docs/Web/API/Node/firstChild) & [Node.nextSibling](https://developer.mozilla.org/en-US/docs/Web/API/Node/nextSibling) look like just the ticket. Both have return null if they happen to be the last child of the parent. Check out
+the links to see the full description of each property we will use. We will use [Node.nodeTypes](https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType) to check if
+the the current node is in fact actual text or just an element. If it's an element we want to ignore it.
+
+```javascript
+function search(wordToMatch) {
+  debugger // drop this function in the chrome console and watch the debugger run.
+  let walkedDOM = []
+  const results = []
+  function walk(node, callback) {
+    callback(node)
+
+    node = node.firstChild
+    // base case
+    while (node != null) {
+      // if base case is not reached then we recurse
+      walk(node, callback)
+
+      node = node.nextSibling
+    }
+    return node
+  }
+
+  walk(document.body, node => {
+    // set a break point here to see how it recurses and pay special attention to the call stack
+    if (node.nodeType === 3) {
+      walkedDOM.push(node.nodeValue)
+    }
+  })
+
+  // RECURSION DONE
+  const wordRegex = wordToMatch ? new RegExp(wordToMatch, "ig") : false
+  /*
+   we simply iterate over the array,
+  lowercase each fragment, by this time
+   all recursion is done do a simple regex
+   match against it and if a fragment returns
+   true we push to a results array
+  */
+
+  walkedDOM.forEach(textFragment => {
+    textFragment = textFragment.toLowerCase()
+    if (textFragment.match(wordRegex)) {
+      results.push(wordRegex.exec(textFragment))
+    }
+  })
+
+  /* return number of matches we got on the webpage.
+  I'm using a computed key name based on
+  the original word passed in at the beginning.
+  */
+
+  return { [wordToMatch]: results.length }
+}
+```
+
+---
+
+You can take this entire script and drop it into the console and test it on any webpage.
+Try it on the front of a news site and type a phrase or word to see how many hits you get.
+Run it through the debugger and step over each recursive call and watch as the call stack shrinks
+and expands. If you would like to look at some simpler examples of recursion you can check out my
+other [blog post on recursion](/recursion)
+
+[repo section this blog post is based on](https://github.com/JasonBBelcher/AlgorithmPractice/tree/master/kata/algorithms/DOMtraversal)
+[article on traversal of the DOM](https://www.digitalocean.com/community/tutorials/how-to-traverse-the-dom)
