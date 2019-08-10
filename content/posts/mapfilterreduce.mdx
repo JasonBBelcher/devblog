@@ -143,8 +143,9 @@ function reduce(array, cb, accumulator) {
   for (i = 0; i < array.length; i += 1) {
     if (!accumulator) {
       accumulator = array[i]
+    } else {
+      accumulator = cb(accumulator, array[i])
     }
-    accumulator = cb(accumulator, array[i])
   }
   return accumulator
 }
@@ -153,6 +154,26 @@ function reduce(array, cb, accumulator) {
 So what is happening here? What is this strange thing? Think of the accumulator as a sum variable. If the accumulator is not passed to the reduce function we simply load in the first item of the array. If we did pass in an accumulator we can either pass in a number or an empty array for instance. Lets do that because most of the tutorials on reduce out there really never cover anything other than summing a bunch of numbers together. This is rarely how we use the method in real projects. Usually we are manipulating a collection (array of objects) coming from a rest api of some sort.
 
 ```javascript
+const arr3 = [1, 2, 3, 4]
+
+const summed = reduce(arr3, (acc, curr) => {
+  return acc + curr
+})
+
+// output is 10
+
+// what if we start at 2?
+
+const summed = reduce(
+  arr3,
+  (acc, curr) => {
+    return acc + curr
+  },
+  2
+)
+
+// output is 12
+
 const arr4 = [
   { key1: "test1", key2: "test2" },
   { key1: "test3", key2: "test4" },
