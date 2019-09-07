@@ -35,8 +35,9 @@ module.exports = {
       },
       {
         name: `resume`,
-        url: 'https://resume.jasonbelcher.dev'
-      }
+        url:
+          "https://drive.google.com/open?id=1QXAC9zhU6RDKHbxOVH4RGpVRvtwLu2oD",
+      },
     ],
   },
 }
