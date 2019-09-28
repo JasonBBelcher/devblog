@@ -36,7 +36,7 @@ module.exports = {
       {
         name: `resume`,
         url:
-          "https://drive.google.com/file/d/1RseBtoDsFB4D8GNmqVtYkwpkuan6Vygm/view?usp=sharing",
+          "https://drive.google.com/file/d/1nxRrMyR5JQ4N4As7LsFfuU03RfO0pjdY/view?usp=sharing",
       },
     ],
   },
