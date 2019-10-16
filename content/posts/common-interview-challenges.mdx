@@ -6,8 +6,10 @@ date: 2019-10-15
 Todays post is about the dreaded interview coding challenges we tend to face as developers on the prowl for an awesome place to work.
 I'm back on the prowl for a job myself and I wanted to share some solutions to common interview coding problems I've failed myself. Failing is painful but it's usually the most memorable
 teacher. All the solutions below are my own. If you are new to coding some of this might be tough. Try and figure it out anyway.
-Set breakpoints in the debugger and see how things change as it runs line by line. For several of the challenges I solve the problems
-multiple ways. This is a good practice to get into and will teach you a lot.
+Set breakpoints in the debugger and see how things change as it runs line by line.
+
+For several of the challenges I solve the problems multiple ways. This is a good practice to get into and will teach you a lot. That being said interviews are a performance art where programming is not.
+I have no answers to this problem but the dichotomy exists and must be coped with.
 
 ## 1. Remove the Duplicates in an Array
 
@@ -121,7 +123,7 @@ return true;
 
 ---
 
-## 3 Find all the vowels in a word
+## 3. Find all the vowels in a word
 
 The signature of the function
 
@@ -148,7 +150,7 @@ function findVowels(word) {
 
 ---
 
-## 4 FizzBuzz
+## 4. FizzBuzz
 
 This one is a classic and it tests to see if you understand how to use modulo operator otherwise known as the remainder of division operator.
 
@@ -226,7 +228,7 @@ console.log(fuzzBizzIt(sampleArr))
 
 ---
 
-# Palindrome
+# 5. Palindrome
 
 A palindrome is a word, sentence or other type of character sequence which reads the same backward as forward.
 
@@ -267,10 +269,6 @@ function isPalindrome(word) {
 
 ---
 
-look ma! no array manipulation methods used! How does this work? Well glad you asked! Since I'm not using `Array.prototype.push() or Array.prototype.unshift()`
-I have to resort to a old fashioned for loop. I have set it to decrement down starting at `word.length - 1` and stopping at the zero index.
-The j variable is set above the loop at zero as well and increments while the i variable decrements.
-
 ```javascript
 function isPalindrome(word) {
   word = word.split("")
@@ -287,4 +285,40 @@ function isPalindrome(word) {
 
 ---
 
+look ma! no array manipulation methods used! How does this work? Well glad you asked! Since I'm not using `Array.prototype.push() or Array.prototype.unshift()`
+I have to resort to a old fashioned for loop. I have set it to decrement down starting at `word.length - 1` and stopping at the zero index.
+The j variable is set above the loop at zero as well and increments while the i variable decrements.
+
 If you get this question and they ask you to do it without the reverse method what they really want to know is if you know how to reverse a string by hand. Learn all 3 ways.
+
+---
+
+# 6. Check for values within a set range [50....100] inclusive
+
+This one I literally just failed and it was so simple. Nerves get my heart pumping so quickly I could barely think.
+Don't let this one get you. Logic is the first thing to get very hard when your entire body is in flight or flight mode.
+Never assume something is easy when you are in the hot seat. The easiest things become much harder.
+
+````javascript
+// Both values are within range of 50 ... 99
+function withinRange(x, y) {
+  if ((x >= 50 && x <= 99) && (y >= 50 && y <= 99)) {
+    return true
+  }
+
+  return false
+}
+
+console.log(withinRange(45, 100)) // returns false
+console.log(withinRange(22, 101)) // returns false
+console.log(withinRange(45, 155)) // returns false
+console.log(withinRange(60, 88)) // returns true
+console.log(withinRange(50, 99)) // returns true
+console.log(withinRange(45, 99))  // returns false
+console.log(withinRange(50, 30))  // returns false
+console.log(withinRange(455, 234)) // returns false
+
+```
+
+---
+````
