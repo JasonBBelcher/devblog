@@ -1,0 +1,290 @@
+---
+title: Common JavaScript Interview Coding Problems
+date: 2019-10-15
+---
+
+Todays post is about the dreaded interview coding challenges we tend to face as developers on the prowl for an awesome place to work.
+I'm back on the prowl for a job myself and I wanted to share some solutions to common interview coding problems I've failed myself. Failing is painful but it's usually the most memorable
+teacher. All the solutions below are my own. If you are new to coding some of this might be tough. Try and figure it out anyway.
+Set breakpoints in the debugger and see how things change as it runs line by line. For several of the challenges I solve the problems
+multiple ways. This is a good practice to get into and will teach you a lot.
+
+## 1. Remove the Duplicates in an Array
+
+Here is the function signature
+
+```typescript
+function removeDups(arr: any[]): any[]
+```
+
+---
+
+```javascript
+
+let sampleArr = [1,2,5,5,8,19,18,16, 14,14, 'spiderman', 'spiderman'];
+
+function removeDups(arr) {
+
+const removeDupsMap = {};
+
+arr.forEach((item) => {
+    removeDupsMap[item] = item;
+});
+
+```
+
+---
+
+Object.keys returns an array of strings that represent the key names of the dictionary. I then map over
+the values and check if the item at each index is a string or number so that the function supports strings and numbers
+
+```javascript
+
+return Object.keys(removeDupsMap).map((item) => {
+    return isNaN(parseInt(item, 10)) ? item : +item;
+});
+
+}
+
+```
+
+---
+
+## 2. Compare two strings and determine whether they are anagrams.
+
+The signature of the function looks like this
+
+```typescript
+function anagram(word1: string, word2: string): boolean
+```
+
+---
+
+```javascript
+
+function anagram(word1, word2) {
+
+
+     word1 =  word1.toLowerCase().trim();
+     word2 =  word2.toLowerCase().trim();
+
+    const word1Map = {};
+    const word2Map = {};
+```
+
+---
+
+Now it's time to count up all hits for each letter and store them inside a
+simple dictionary (hash map) so they can be compared against.
+
+```javascript
+for (var i = 0; i < word1.length; i++) {
+  word1Map[word1[i]] = word1Map[word1[i]] + 1 || 1
+}
+
+for (var j = 0; j < word2.length; j++) {
+  word2Map[word2[j]] = word2Map[word2[j]] + 1 || 1
+}
+```
+
+---
+
+Because objects do not have a length property use Object.keys which converts all existing keys to an array of strings.
+Therefore because an array has a length property we can easily compare the length of both hashmaps.
+
+Check that both hash maps are of the same length
+otherwise there is no sense in going further.
+
+```javascript
+if (Object.keys(word1Map).length !== Object.keys(word2Map).length) {
+  return false
+}
+```
+
+---
+
+if maps are of same length then loop through and compare the key values
+
+```javascript
+
+for(key in word1Map) {
+   if(word1Map[key] !== word2Map[key]) {
+       return false;
+   }
+}
+
+return true;
+
+}
+
+```
+
+---
+
+## 3 Find all the vowels in a word
+
+The signature of the function
+
+```typescript
+function findVowels(word: string): number
+```
+
+This one is pretty easy using a quick hashmap / dictionary of the vowels. First split the word into an array. Then you can simply loop over the word one letter at a time. When a match returns truthy add one to the increment variable called vowelsInWord When finished return the result.
+
+---
+
+```javascript
+function findVowels(word) {
+  let vowelsInWord = 0
+  const vowels = { a: "a", e: "e", i: "i", o: "o", u: "u" }
+  word.split("").forEach(l => {
+    if (vowels[l.toLowerCase()]) {
+      vowelsInWord += 1
+    }
+  })
+  return vowelsInWord
+}
+```
+
+---
+
+## 4 FizzBuzz
+
+This one is a classic and it tests to see if you understand how to use modulo operator otherwise known as the remainder of division operator.
+
+The challenge is usually stated something like this:
+
+- console logs the numbers from 1 to n, where n is the integer the function takes as its parameter
+- logs fizz instead of the number for multiples of 3
+- logs buzz instead of the number for multiples of 5
+- logs fizzbuzz for numbers that are multiples of both 3 and 5
+
+```javascript
+// solution 1
+
+function fizzBuzz(nums) {
+  let result = ""
+  nums.forEach(num => {
+    if (num % 5 === 0 && num % 3 === 0) {
+      result += "FizzBuzz" + "\n"
+    } else if (num % 3 === 0) {
+      result += "Fizz" + "\n"
+    } else if (num % 5 === 0) {
+      result += "Buzz" + "\n"
+    }
+  })
+
+  return result
+}
+
+// a test arr generator
+
+let sampleArr = []
+let i = 1
+
+while (i < 100) {
+  i += 1
+  sampleArr.push(Math.floor(Math.random() * 100 + 1))
+}
+
+console.log(fizzBuzz(sampleArr))
+```
+
+---
+
+Just a slightly different approach for the heck of it.
+
+```javascript
+// solution 2
+
+function divisibleBy(num, div) {
+  return num % div === 0
+}
+
+function fuzzBizz(num) {
+  if (divisibleBy(num, 3) && divisibleBy(num, 5)) {
+    return "FizzBuzz \n"
+  } else if (divisibleBy(num, 3)) {
+    return "Fizz \n"
+  } else if (divisibleBy(num, 5)) {
+    return "Buzz \n"
+  } else {
+    return ""
+  }
+}
+
+function fuzzBizzIt(sampleArr) {
+  let result = ""
+  sampleArr.forEach(number => {
+    result += fuzzBizz(number)
+  })
+  return result
+}
+
+console.log(fuzzBizzIt(sampleArr))
+```
+
+---
+
+# Palindrome
+
+A palindrome is a word, sentence or other type of character sequence which reads the same backward as forward.
+
+Here is the function signature
+
+```typescript
+function isPalindrome(word: string): boolean
+```
+
+---
+
+a simple way to solve it goes like this:
+
+```javascript
+function isPalindrome(word) {
+  return word
+    .split("")
+    .reverse()
+    .join("") === word
+    ? true
+    : false
+}
+```
+
+---
+
+What if they ask you to solve it without using reverse? Oh snap it's game time!
+
+```javascript
+function isPalindrome(word) {
+  const reversedWord = []
+  word.split("").forEach(letter => {
+    reversedWord.unshift(letter)
+  })
+  return reversedWord.join("") === word ? true : false
+}
+```
+
+---
+
+look ma! no array manipulation methods used! How does this work? Well glad you asked! Since I'm not using `Array.prototype.push() or Array.prototype.unshift()`
+I have to resort to a old fashioned for loop. I have set it to decrement down starting at `word.length - 1` and stopping at the zero index.
+The j variable is set above the loop at zero as well and increments while the i variable decrements.
+
+```javascript
+function isPalindrome(word) {
+  word = word.split("")
+  const reversedWord = []
+  let j = 0
+  for (let i = word.length - 1; i >= 0; i--) {
+    reversedWord[j] = word[i]
+    j++
+  }
+
+  return reversedWord.join("") === word.join("") ? true : false
+}
+```
+
+---
+
+If you get this question and they ask you to do it without the reverse method what they really want to know is if you know how to reverse a string by hand. Learn all 3 ways.
