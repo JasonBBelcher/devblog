@@ -1,0 +1,270 @@
+---
+title: Common App Challenge Pattern (Angular Version)
+date: 2019-10-28
+---
+
+I've run into a common reoccuring pattern in fullstack and front end developer interviews lately. Most of them consist of a few simple requirements that test
+your ability to do things like manipulate json data coming from an api or database and to build interactive and functional user interfaces.
+
+The requirement goes something like this:
+
+Build an app in framework X that will pull from some rest endpoint and populate a search-able list with a collapse-able detail view.
+Do as much as you can in 30 minutes. It's harder than you might think with a panel of developers staring at you while you attempt to
+calm your nerves enough to think critically inside a fog of panic.
+
+How do you get better at this type of interview style? Only one way I know of. Build it over and over and do it in as many ways as you
+possibly can and time it. The goal for things like this is not code that scales or has to stand any test of time. The goal is to show
+that you have the baseline skill set to do the job in as little time as possible.
+
+So what did I do? I obsessed on it and built the exact same application 3 times over in [Vanilla.js (MVC)](https://stackblitz.com/edit/vanilla-js-filter-search-demo), [React](https://stackblitz.com/edit/react-filter-search-demo), and [Angular](https://codesandbox.io/s/angular-902cr?fontsize=14).
+
+## Angular Filter Search Demo
+
+The angular version consists of just a few pieces.
+
+- service (ajax)
+- component (code behind file)
+- component (template)
+- interface (contract)
+- and some css styles
+
+### api service
+
+I started with the api service. I usually prefer to start with the data.
+
+```typescript
+import { Injectable } from "@angular/core"
+import { HttpClient } from "@angular/common/http"
+import { Observable } from "rxjs"
+
+@Injectable()
+export class ApiService {
+  url: string
+
+  constructor(private http: HttpClient) {
+    this.url = `https://jsonplaceholder.typicode.com/users`
+  }
+
+  getUsers(): Observable<any> {
+    return this.http.get(this.url)
+  }
+}
+```
+
+---
+
+A service in angular is a singleton class. All this means is that it gets instantiated once and only once. In practical terms I would use services when you
+want to give access to data throughout the many components in your application from a single source. I think of a service as a place
+to store the state of the application or to make ajax requests to an api.
+
+All we are doing is declaring a url property of type
+string and setting it up with an endpoint inside the constructor. There is only one service method needed. I've named it
+getUsers. Notice that the return type is an observable and the method returns the result of getting the data from the url.
+
+If you aren't used to using Observables it can take some getting used to. A simple description might be that an Observable
+opens a stream of data when new values are available it publishes them to the observable stream and on the other end whatever is
+listening can get the data. We won't get into it but you can then use Rxjs to manipulate and transform the data using rx operators.
+
+In order to get the data out you can subscribe `this.api.getUsers().subscribe()` or load it into a variable of type observable
+`this.users$ = this.api.getUsers();`
+
+If you prefer to use promises you can convert it to a promise like so.
+
+```typescript
+
+ getUsers():Promise<any> {
+     return this.http.get(this.url).toPromise();
+   }
+
+```
+
+---
+
+### Search List component
+
+```typescript
+// app component
+
+@Component({
+  selector: "my-app",
+  templateUrl: "./app.component.html",
+  styleUrls: ["./app.component.css"],
+})
+export class AppComponent implements OnInit {
+  users$: Observable<IUser[]>
+
+  constructor(private api: ApiService) {}
+  ngOnInit() {
+    this.users$ = this.api.getUsers()
+  }
+}
+```
+
+---
+
+Using the ngOnInit lifecycle hook I load the `users$` variable with the result of calling the api service method
+getUsers. Then from the template using the `*ngFor` directive I can loop over the observable stream of users.
+Here is how you do that.
+
+```html
+<ul>
+  <li *ngFor="let user of users$ | async">
+    <h2>{{ user.name }}</h2>
+
+    <div>
+      <p>{{ user.address.street }}</p>
+      <p>{{ user.address.suite }}</p>
+      <p>{{ user.address.city }}</p>
+      <p>{{ user.address.zipcode }}</p>
+      <p>{{ user.email }}</p>
+      <p>{{ user.phone }}</p>
+    </div>
+  </li>
+</ul>
+```
+
+---
+
+Notice the use of the async pipe. If you load a template with an Observable stream you must use the async pipe or
+nothing works. If we had subscribed to the service method like this `this.api.getUsers().subscribe(users => this.users = users)`
+we would not need the async pipe.
+
+So we have the data from the api and we have it displayed in the component. Next it would be nice to show or hide the details
+of the user address for each user in the list.
+
+```typescript
+
+// component method
+
+ showHide(user: IUser) {
+    user.show = !user.show;
+  }
+
+
+
+```
+
+---
+
+Since in javascript you can dynamically create properties and the property initially created will be undefined
+it will resolve to false. There is no need to set an initial value. Good old type coersion to the rescue. When the showHide()
+method is triggered it will simply start flipping a boolean from there.
+
+```html
+<!-- component template -->
+<ul>
+  <li *ngFor="let user of filteredUsers">
+    <h1 (click)="showHide(user)">{{user.name}}</h1>
+
+    <div *ngIf="user.show">
+      <p>{{user.address.street}}</p>
+      <p>{{user.address.suite}}</p>
+      <p>{{user.address.city}}</p>
+      <p>{{user.address.zipcode}}</p>
+    </div>
+  </li>
+</ul>
+```
+
+Using the `*ngIf` directive just check against the show property that will be created for each clicked item.
+
+Now that show/hide functionality is done I'll move on to the hardest part of the challenge, that of filter searching
+a list of users based on user input.
+
+```typescript
+
+// inside component
+
+search(value:string) {
+    if(value) {
+
+
+      this.filteredUsers$ = this.users$
+      .pipe(
+        // the stream is of a single item that is of type array
+        // map(user => user.name) would not work because it is not // a stream of items inside the array
+        map((users: IUser[]) => {
+          // inside the map we use the native Array.prototype.filter() method to filter down the results by name
+          return users.filter((user: IUser) => user.name.toLowerCase().indexOf(value.toLowerCase()) > -1)
+        })
+
+      )
+  } else {
+    // reload the full data set
+    this.filteredUsers$ = this.users$;
+  }
+}
+
+```
+
+To understand what is happening here you need to understand that with observable streams you will get a stream of the array
+and not a stream of array values. If we had converted to promises this code above would be more like this.
+
+```typescript
+
+search(value:string) {
+    if(value) {
+    this.filteredUsers =  this.users.filter((user: IUser) => user.name.toLowerCase().indexOf(value.toLowerCase()) > -1);
+
+    } else {
+      // reload the full list
+      this.filteredUsers = this.users;
+    }
+  }
+
+```
+
+In either case I'm using the Array.prototype.filter method to return a new array list of user objects consisting of the returned
+indexOf any array objects with a property of name that match the search criteria coming from the input.
+
+---
+
+```html
+<!-- component template -->
+<div class="container">
+  <header>
+    <h1>Angular Filter Search Demo</h1>
+  </header>
+  <input
+    class="search-box"
+    placeholder="start typing to narrow search"
+    (keyup)="search($event.target.value)"
+    type="text"
+  />
+  <ul>
+    <li *ngFor="let user of filteredUsers$ | async">
+      <h2 class="user" (click)="showHide(user)">{{user.name}}</h2>
+
+      <div class="collapse-able" *ngIf="user.show">
+        <p>{{user.address.street}}</p>
+        <p>{{user.address.suite}}</p>
+        <p>{{user.address.city}}</p>
+        <p>{{user.address.zipcode}}</p>
+        <p>{{user.email}}</p>
+        <p>{{user.phone}}</p>
+      </div>
+    </li>
+  </ul>
+</div>
+```
+
+---
+
+Inside the template trigger the class method with event syntax `(keyup)="search($event.target.value)"` passing in the event
+object then accessing the inputs value.
+
+That does it for the functionality requirements of this little demo application. Dress it up with a bit of css and away you go!
+
+<iframe
+  src="https://codesandbox.io/embed/angular-902cr?fontsize=14"
+  style="width:100%; height:500px; border:0; border-radius: 4px; overflow:hidden;"
+  title="Angular"
+  allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
+  sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
+></iframe>
+
+---
+
+Come back later for blog posts on building this same app in
+[Vanilla.js (MVC)](https://stackblitz.com/edit/vanilla-js-filter-search-demo) and
+[React](https://stackblitz.com/edit/react-filter-search-demo)
