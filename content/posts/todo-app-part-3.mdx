@@ -1,0 +1,364 @@
+---
+title: MEAN Stack Todo App Part 3
+date: 2019-11-11
+---
+
+Part 1 covered building a todo app with Angular along with a mock service that persisted to local storage.
+Part 2 covered building out a simple todo express api. Now that we have all the pieces ready let's refactor
+the angular front end to call the api instead of local storage. If you haven't read [part 1](./todo-app-walkthrough) or [part2](./todo-app-part2) this will be
+confusing. It's simply a refactor to swap out the old mocked service with the new todo api backend.
+
+## Todo Service
+
+The service gets 3 private properties. URL holds the baseurl of the api. todos will hold the full set of
+todos from the server. filteredTodos will hold a subset of todos based on the searched results.
+
+```typescript
+import { Injectable } from "@angular/core";
+import { Todo } from "./todo";
+import { HttpClient } from "@angular/common/http";
+
+@Injectable()
+export class RepositoryService {
+  private URL: string;
+  private todos: Array<Todo<string, boolean, string>> = [];
+  private filteredTodos: Array<Todo<string, boolean, string>>;
+
+  constructor(private http: HttpClient) {
+    this.URL = `http://localhost:8080`;
+  }
+```
+
+---
+
+### createTodo
+
+Instantiate an entity class for each todo created. Pass this to the POST ajax request.
+using the `toPromise()` helper to convert observables (default for HttpClient) to promises.
+
+```typescript
+
+  createTodo(text: string): Promise<any> {
+    const todo = new Todo(text, false, 0);
+    return this.http.post(`${this.URL}/todo`, todo).toPromise();
+  }
+
+```
+
+---
+
+### getTodos
+
+This one needs a bit of explanation. In order to support the filter todo method we need 2 state
+managed properties in the service. `this.todos` holds the full results from the server. In order
+to both pass the results to the services private property and pass on the promise to the component I'm
+wrapping the thenable inside of a new Promise and then resolving it after loading `this.todos`
+with the data we need. Angular has other ways of doing the same thing with observables but that is beyond
+the scope of this tutorial.
+
+```typescript
+
+
+getTodos(): Promise<any> {
+  return new Promise((resolve, reject) => {
+    return this.http
+      .get(`${this.URL}/todos`)
+      .toPromise()
+      .then((todos: Todo<string, boolean, string>[]) => {
+        this.todos = todos;
+        resolve(this.todos);
+      })
+      .catch((err) => {
+        reject(err);
+      });
+  });
+}
+
+```
+
+---
+
+### updateTodo
+
+Simply passes in the todo as before and makes a put request returning the updated record
+
+```typescript
+
+updateTodo(todo: Todo<string, boolean, string>): Promise<any> {
+  return this.http.put(`${this.URL}/todo/${todo.uid}`, todo).toPromise();
+}
+
+```
+
+---
+
+### removeTodo
+
+Passes in the uid and then passes that to the http call to delete the document.
+
+```typescript
+
+removeTodo(uid: number): Promise<any> {
+  return this.http.delete(`${this.URL}/todo/${uid}`).toPromise();
+}
+
+```
+
+---
+
+### changePriority
+
+No changes needed
+
+```typescript
+
+changePriority(event) {
+  if (event.operation === "+") {
+    event.todo.priority += 1;
+  }
+  if (event.operation === "-") {
+    if (event.todo.priority > 0) {
+      event.todo.priority -= 1;
+    }
+  }
+}
+
+```
+
+---
+
+### getFilteredTodos
+
+This returns a subset of todos based on the live search filter method
+
+```typescript
+
+getFilteredTodos() {
+  return Promise.resolve(this.filteredTodos);
+}
+
+```
+
+---
+
+### filterSearch
+
+Takes in a string or number. If it's a number it uses
+the Array.prototype.filter method to check if the searched
+priority number matches the input value passed in.  
+ if the value is a string it filters down the todos by looking
+at the text property and sends back all results that match a
+any combination of characters. indexOf will return either the
+index or -1 which is coerced to false by javascript.
+
+```typescript
+
+filterSearch(value) {
+  if (!isNaN(value)) {
+    this.filteredTodos = this.todos.filter(
+      (todo) => parseInt(todo.priority, 10) === parseInt(value, 10)
+    );
+  } else if (typeof value === "string") {
+    this.filteredTodos = this.todos.filter((todo) => {
+      return todo.text.toLowerCase().indexOf(value.toLowerCase()) > -1;
+    });
+  }
+  return Promise.resolve();
+}
+
+```
+
+---
+
+### clearTodos
+
+Simply clears all todos;
+
+```typescript
+
+clearTodos(): Promise<any> {
+  return this.http.delete(`${this.URL}/todos`).toPromise();
+    }
+} // end of class
+
+
+```
+
+---
+
+## Todo Component
+
+```typescript
+import { Component, OnInit } from "@angular/core"
+import { RepositoryService } from "./repository.service"
+import { Todo } from "./todo"
+
+@Component({
+  selector: "app-root",
+  templateUrl: "./app.component.html",
+  styleUrls: ["./app.component.css"],
+})
+export class AppComponent implements OnInit {
+  todos: Todo<string, boolean, string>[]
+
+  constructor(private repository: RepositoryService) {}
+
+
+  ngOnInit() {
+    this.repository.getTodos().then(todos => {
+      this.todos = todos
+    })
+  }
+```
+
+---
+
+### addTodo
+
+```typescript
+
+  addTodo(input) {
+    if (input.value) {
+      this.repository
+        .createTodo(input.value)
+        .catch(err => alert(JSON.stringify(err)))
+      this.getTodos()
+      input.value = ""
+    } else {
+      return
+    }
+  }
+
+
+```
+
+---
+
+### clearTodos
+
+```typescript
+
+  clearTodos() {
+    this.repository
+      .clearTodos()
+      .then(todos => {
+        this.todos = todos
+      })
+      .catch(err => alert(JSON.stringify(err)))
+  }
+
+```
+
+### getTodos
+
+```typescript
+
+  getTodos() {
+    this.repository
+      .getTodos()
+      .then(todos => {
+        this.todos = todos
+      })
+      .catch(err => {
+        alert(JSON.stringify(err))
+      })
+  }
+
+```
+
+---
+
+### changePriority
+
+```typescript
+
+  changePriority(event) {
+    this.repository.changePriority(event)
+    this.repository
+      .updateTodo(event.todo)
+      .catch(err => alert(JSON.stringify(err)))
+  }
+
+```
+
+---
+
+### toggleComplete
+
+Todo object gets passed in and the boolean is simple flipped like a light switch.
+Once that is done the todo is passed ot the `updateTodo()` method to be sent off to
+the server.
+
+```typescript
+
+toggleComplete(todo) {
+  todo.completed = !todo.completed
+  this.repository.updateTodo(todo).catch(err => alert(JSON.stringify(err)))
+}
+
+```
+
+---
+
+### removeTodo
+
+The remove method returns the todo that was deleted. A comparison
+between the current todos.uid and newly deleted one is made to
+remove it in the UI locally.
+
+```typescript
+
+removeTodo(id) {
+  this.repository
+    .removeTodo(id)
+    .then(todo => {
+      const filtered = this.todos.filter(t => {
+        return t.uid !== todo.uid
+      })
+      this.todos = filtered
+    })
+    .catch(err => alert(JSON.stringify(err)))
+}
+
+```
+
+---
+
+### filterSearch
+
+Checks if there is a value. If no value is found it loads the full set
+of todos using the service method `getTodos()`. If a value is found it runs the
+service method `filterSearch()`. Inside the thenable of filterSearch the search
+action is finished. `getFilteredTodos()` returns the results of the filter search
+already loaded into the private property called `this.filteredTodos`
+
+```typescript
+
+  filterSearch(value) {
+    if (!value) {
+      this.repository.getTodos().then(todos => {
+        this.todos = todos
+      })
+    } else {
+      this.repository.filterSearch(value).then(() => {
+          // searching done inside here.
+        this.repository.getFilteredTodos().then(todos => {
+            // load in the filtered set from the search
+          this.todos = todos
+        })
+      })
+    }
+  }
+}
+
+```
+
+---
+
+That's it folks! If you followed all the way through you are especially tenacious! I did my best
+to keep the techniques used as simple and vanilla.js as possible while still using Angular. Angular has a
+lot more power using RxJS but that can be very opaque for those just getting started.
+
+Next time I'll revist this tutorial and refactor it to use observable streams. That will be for another time.
+
+[github branch this post is based on](https://github.com/JasonBBelcher/angular-todos/tree/blog-todo-app)
