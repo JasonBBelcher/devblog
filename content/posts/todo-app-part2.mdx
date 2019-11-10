@@ -1,0 +1,294 @@
+---
+title: MEAN Stack Todo App Part 2
+date: 2019-11-10
+---
+
+In part one an Angular front end todo application was built with a Mock service to handle all CRUD operations. Local Storage was
+used to persist data between browser refreshes. The application was setup with a real back-end in mind to eventually take over the job.
+
+This is why you saw the use of `Promise.resolve()`. When building a prototype it's good to think about how your data will be accessed
+even before hooking it up. If I had returned just the data in a synchronous manner a lot of refactored component code would be needed
+to put the pieces together. Instead I set it up to be able to easily switch out the mock service methods for the real thing.
+
+Now on to the back end code!
+
+## Node Express Backend
+
+Below is a simple error handler to catch all errors properly. This will be registered as a global middleware that Express
+will use to funnel all errors through.
+
+```javascript
+function errorHandler(err, req, res, next) {
+  return res.status(err.status || 500).json({
+    err: {
+      message: err.message || "Something went wrong.",
+    },
+  })
+}
+```
+
+---
+
+## Initialize the Express Application
+
+This part sets up common middleware needed in most Express apps. Cors is there to allow for access
+from other domains and ports. Morgan is a simple logging middleware useful for debugging.
+
+For this tutorial I decided to use
+[mlab](https://docs.mlab.com/connecting/). It's an awesome way to get up and running
+without having to install a local mongo database.
+
+The database URI is usually pulled in using an environment variable.
+
+A common tool for this is called
+[dotenv](https://www.npmjs.com/package/dotenv) Never check in database connections that contain passwords to
+any public github or gitlab account. It's only done here for demonstration purposes.
+
+The [monk db library](https://automattic.github.io/monk/) is loaded and the database url is registered
+with it. After that a todos collection is created.
+
+```javascript
+// initializing the app
+const express = require("express")
+const app = express()
+
+// logging middle ware
+const morgan = require("morgan")
+// cors allows you to hit the api endpoints from a different domain or port
+const cors = require("cors")
+// usually pulled from an environment variable using dotenv.
+const dbUrl = `mongodb://<username>:<password>1@ds141248.mlab.com:41248/codesandbox`
+// using monk a thin wrapper around mongodb
+const db = require("monk")(dbUrl)
+// initialize the collection
+const todos = db.create("todos")
+
+// register the logging middleware
+app.use(morgan("dev"))
+
+// register express to now parse json
+app.use(express.json())
+// register cors middleware so that the api
+// can be used from a different domain and port
+app.use(cors())
+```
+
+---
+
+## Build the CRUD routes
+
+### GET All Todos
+
+When client code makes a request to the url resource `http://<base_url>/todos` with the GET verb
+Express matches the route and fires off the handler defined in the route. The handler
+in this case is an anonymous function. Inside the handler the database is asked for every
+todo in the collection.
+
+```javascript
+// GET all todos
+app.get("/todos", (req, res, next) => {
+  todos
+    // find with no args will pull the entire collection
+    .find({})
+    .then(docs => {
+      return res.json(docs)
+    })
+    .catch(next)
+})
+```
+
+---
+
+### POST A New Todo
+
+When client code makes a request to the url resource `http://<base_url>/todo` with the POST verb
+Express matches the route and fires off the handler defined in the route. The body of the request
+is checked for the required properties needed to create a todo and checked for the correct type.
+If it passes the test the database `insert()` method is called and the properties on the body of
+the request are passed in. If the test fails a custom error is returned to the client.
+
+```javascript
+// POST a todo
+.post("/todo", (req, res, next) => {
+  // destructure all properties off
+  const { text, priority, completed, uid } = req.body
+  // the req.body property
+  // check for the existance of
+  // text uid, priority, and completed properties
+    (typeof text === "string" &&
+  if (
+      typeof uid === "number" &&
+      typeof parseInt(priority, 10) === "number" &&
+      typeof completed === "boolean") ||
+    req.body.length === 4
+  ) {
+    todos // insert a new todo into the database
+      .insert({
+        uid,
+        text,
+        priority,
+        completed,
+      })
+      .then(doc => {
+        return res.json(doc) // return the newly created record to the
+        //front end in json format for deserialization by client
+      })
+      .catch(next) // catch any errors and pass along to errorhandler
+  } else {
+    // if all required properties aren't found inside
+    // the req.body then return a custom error
+    next({
+      status: 400,
+      message:
+        "please provide uid, text, priority, and completed properties only.",
+    })
+  }
+})
+```
+
+---
+
+### UPDATE (PUT) A New Todo
+
+When client code makes a request to the url resource `http://<base_url>/todo/:uid` with the PUT verb
+Express matches the route and fires off the handler defined in the route. The body of the request
+is checked for the required properties needed to create a todo and checked for the correct type.
+If the test fails a custom error is returned to the client. If it passes the test the database
+`findOneAndUpdate()` method is called and the properties on the body of the request are passed
+into a [`$set` mongo operator](https://docs.mongodb.com/manual/reference/operator/update/set/).
+
+```javascript
+// UPDATE a todo by uid
+app.put("/todo/:uid", (req, res, next) => {
+  const { uid } = req.params // destructure from params object
+  // destructure required todo properties
+  const { text, completed, priority } = req.body
+  // check that these properties exist.  If not then
+  //  do not update and throw error
+  if (text && typeof completed === "boolean" && priority) {
+    todos
+      .findOneAndUpdate(
+        {
+          uid: parseFloat(uid),
+        },
+        {
+          // $set is not specific to monk.
+          // This is a native mongo driver operator
+          // this allows us to update properties for
+          // the record found by findOneAndUpdate
+          $set: {
+            text,
+            completed,
+            priority,
+          },
+        }
+      )
+      .then(updatedDoc => {
+        // return a json response of the
+        // updated document for deserialization by the client
+        return res.json(updatedDoc)
+      })
+      .catch(next)
+  } else {
+    next({
+      status: 400,
+      message: "please provide text, priority, and completed properties.",
+    })
+  }
+})
+```
+
+---
+
+# DELETE One Todo by UID
+
+When client code makes a request to the url resource `http://<base_url>/todo/:uid` with the DELETE verb
+Express matches the route and fires off the handler defined in the route. The handler
+in this case is an anonymous function. Inside the handler the `findOneAndDelete()` method is called and the
+uid is passed in. The uid is created if you remember from the Entity class every time a new todo is created.
+It's not a real uid but a simple random number of type float and is not guaranteed to be unique for large data sets.
+
+In a real application situation I've seen this used [uuid generator](https://www.npmjs.com/package/uuid). Of course
+the other option is to use \_id field generated by mongo on every created document. This is usually the preferred method.
+I went with the genId method to show how to build the todo app purely in javascript first.
+Regardless, the end result is the same for the job at hand.
+
+```javascript
+// DELETE a todo by uid
+app.delete("/todo/:uid", (req, res, next) => {
+  const { uid } = req.params
+
+  todos
+    .findOneAndDelete({
+      uid: parseFloat(uid),
+    })
+    .then(doc => {
+      return res.json(doc)
+    })
+    .catch(next)
+})
+```
+
+---
+
+### DELETE All Todos
+
+```javascript
+// DELETE all todos
+
+app.delete("/todos", (req, res, next) => {
+  todos.remove({}).then(() => {
+    res.json([])
+  })
+})
+```
+
+---
+
+#### Global Error Handling
+
+This catches all errors other than the ones caught in the routes above.  
+For any route that doesn't exist the error not found will be passed to the
+`errorHandler` right before the `app.listen(8080)` statement.
+
+```javascript
+app.use((req, res, next) => {
+  let err = new Error("Not Found")
+  err.status = 404
+  next(err)
+})
+
+// register error handler to be used
+// globally for all errors produced by express
+
+app.use(errorHandler)
+
+// this could come from an env var as well.
+app.listen(8080)
+```
+
+---
+
+### Deeper Reading
+
+- [Why use UUID?](https://rclayton.silvrback.com/do-you-really-need-a-uuid-guid)
+- [What is Express Middleware?](https://developer.okta.com/blog/2018/09/13/build-and-understand-express-middleware-through-examples)
+- [How does Express Routing work?](https://alligator.io/nodejs/express-routing/)
+- [Keeping Routes Clean in Express](https://scotch.io/tutorials/keeping-api-routing-clean-using-express-routers)
+- [How to setup mlab to use in a project](https://docs.mlab.com/)
+- [Using Monk with Express](https://webapplog.com/intro-to-express-js-simple-rest-api-app-with-monk-and-mongodb/)
+
+#### Link to Github project this post is based on
+
+- [todos-backend](https://github.com/JasonBBelcher/todos-backend)
+- [codesandbox (play with it using post man or curl)](https://codesandbox.io/s/trusting-ganguly-w1p2y?fontsize=14)
+
+<iframe
+  src="https://codesandbox.io/embed/trusting-ganguly-w1p2y?fontsize=14"
+  style="width:100%; height:500px; border:0; border-radius: 4px; overflow:hidden;"
+  title="todos-backend"
+  allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
+  sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
+></iframe>
+
+Coming up next: Hooking up Angular to the backend todo resources.

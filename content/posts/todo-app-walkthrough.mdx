@@ -304,6 +304,8 @@ contain the data you specified in the child component using the `this.outputprop
 
 ---
 
+### Parent App Component Template
+
 ```html
 <div class="container">
   <header>
@@ -331,6 +333,7 @@ contain the data you specified in the child component using the `this.outputprop
   <section>
     <ul>
       <li *ngFor="let todo of todos">
+        <!-- Here is the todo item dumb component being consumed by the parent template  -->
         <todo-item
           [todo]="todo"
           (removed)="removeTodo($event)"
@@ -469,8 +472,9 @@ export class AppComponent implements OnInit {
 
 #### Code Sand Box This Post is Based On
 
-[editor link](https://codesandbox.io/s/angular-2c6v2?fontsize=14)
+[github todo project](https://github.com/JasonBBelcher/angular-todos/tree/blog-todo-app)
 
+[editor link](https://codesandbox.io/s/angular-2c6v2?fontsize=14)
 
 <iframe
   src="https://codesandbox.io/embed/angular-2c6v2?fontsize=14"
