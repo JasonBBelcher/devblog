@@ -1,5 +1,5 @@
 ---
-title: MEAN Stack Todo App
+title: Angular Todo Application
 date: 2019-11-08
 ---
 
@@ -31,28 +31,23 @@ their importance. An id is useful to make each todo unique. Text is obviously
 the whole reason for a todo to exist and the completed property lets the user
 know the progress they have made so far. You don't have to define a class to wrap
 the todo data. You could easily use an interface. Really, you could just as easily
-use an object literal. Defining an Entity class/interface helps with readability.
+use an object literal.
 
-One important difference to note is that interfaces are stripped away at runtime. Classes are not.
+One interesting difference to note is that [typescript](https://www.freecodecamp.org/news/learn-typescript-in-5-minutes-13eda868daeb/) interfaces are stripped away at runtime. Classes are not.
 Notice how there is a method on the todo class that generates Ids. This type of encapsulation
 could also be extended to take care of changing priority and completed flags. Because I know
 that localStorage will strip away any methods when serializing to JSON format I'm choosing
 to keep that functionality inside the angular service. genId() will only be needed when posting
 so it won't matter if the method disapears off the object instance later.
 
-#### Deeper Reading
-
-- [generics](https://www.typescriptlang.org/docs/handbook/generics.html)
-- [entity class](https://stackoverflow.com/questions/2550197/whats-the-difference-between-entity-and-class)
-
 ---
 
 ```typescript
-export class Todo<T, U, V> {
+export class Todo {
   id: number
-  text: T
-  completed: U
-  priority: V
+  text: string
+  completed: boolean
+  priority: number
 
   constructor(text, completed, priority) {
     this.id = this.genId()
@@ -69,150 +64,180 @@ export class Todo<T, U, V> {
 
 ---
 
+#### Deeper Reading
+
+- [entity class](https://stackoverflow.com/questions/2550197/whats-the-difference-between-entity-and-class)
+
+---
+
 ## Todo Service
 
 Next I create an angular service to handle all actions associated with Todos.
-Why do this? You could easily do all your business logic inside the component in this case but
-rather than that lets show how to do this in a way that scales by using a service class.
-
-Angular services are a great way to share functionality to other components or even different
-modules. Right now we have no backend so all persistance will be done using [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
-available in all modern browsers. Later this mocked service will be replaced with the api
-service that will talk to the Node Express todo api.
-
-I will write below inline comments of what each method implementation is doing for
-those that need it.
+Angular services are a great way to share functionality to other components.
+Right now we have no backend so all persistance will be done using [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
+available in all modern browsers. Later this mocked service will be replaced with the [api
+service that will talk to the Node Express todo api](./todo-app-part2).
 
 ---
 
 ```typescript
+// todo service snippets
+
 import { Injectable } from "@angular/core"
 import { Todo } from "./todo"
 
 @Injectable()
 export class RepositoryService {
-  /* private property to handle the todo state
-   It is declared as an array of type Todo defined earlier as an entity class
-   if no todos are found in local storage then load as an empty array.
-    */
-  private todos: Array<Todo> = JSON.parse(localStorage.getItem("todos")) || []
-  /*
-   createTodo takes in a string as input and pushes a new Todo Entity
-   to the todos array. It passes in defaults of completed false and
-   sets a default priority of zero. Then we refresh local storage to
-    reflect the todos in memory.
-  */
 
+```
+
+---
+
+private property to handle the todo state
+It is declared as an array of type Todo defined earlier as an entity class
+if no todos are found in local storage then load as an empty array.
+
+```typescript
+private todos: Array<Todo> = JSON.parse(localStorage.getItem("todos")) || []
+
+```
+
+---
+
+createTodo takes in a string as input and pushes a new Todo Entity
+to the todos array. It passes in defaults of completed false and
+sets a default priority of zero. Then we refresh local storage to
+reflect the todos in memory.
+
+```typescript
   createTodo(todotext) {
     this.todos.push(new Todo(todotext, false, 0))
 
     localStorage.setItem("todos", JSON.stringify(this.todos))
   }
 
-  /*
-    getTodos is an automatically resolved promise with a 
-    payload of the private property defined as an array 
-    of todo entities.  I used resolved Promises so that 
-    my component code will be written in a way that 
-    expects asynchronously delivered todos. 
-    This sets up the code to be easily switched out 
-    for a real backend later. 
+```
 
-  */
+---
 
-  getTodos() {
-    return Promise.resolve(this.todos)
+`getTodos()` is an automatically resolved promise with a
+payload of the private property defined as an array
+of todo entities. I used resolved Promises so that
+my component code will be written in a way that
+expects asynchronously delivered todos.
+This sets up the code to be easily switched out
+for a real backend later.
+
+```typescript
+
+getTodos() {
+  return Promise.resolve(this.todos)
+}
+
+```
+
+---
+
+Update Todo is a little tricky because before we can
+change the todo we need to find the todo we want to
+update first then update it. [Array.prototype.findIndex](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findIndex)
+will return to us an index in the array based on a
+boolean test. In this case we use the id to match
+uniqueness to. If a match is found it gets returned.
+
+Using the returned index the changed todo passed into
+the updateTodo method can overwrite the right todo
+by passing it to the todos array.
+
+```typescript
+
+updateTodo(todo) {
+  const index = this.todos.findIndex(t => {
+    return t.id === todo.id
+  })
+
+  this.todos[index] = todo
+
+  localStorage.setItem("todos", JSON.stringify(this.todos))
+
+  return Promise.resolve(this.todos)
+}
+```
+
+---
+
+using filter you can match on the id of a todo and return
+the entire array except the one matched. Another way to
+do this is with splice() but this is cleaner to read.
+
+```typescript
+
+removeTodo(id) {
+  this.todos = this.todos.filter(todo => todo.id !== id)
+  localStorage.setItem("todos", JSON.stringify(this.todos))
+  return Promise.resolve(this.todos)
+}
+
+changePriority(event) {
+  if (event.operation === "+") {
+    event.todo.priority += 1
   }
+  if (event.operation === "-") {
+    if (event.todo.priority > 0) {
+      event.todo.priority -= 1
+    }
+  }
+}
 
-  /*
+getFilteredTodos() {
+  return Promise.resolve(this.filteredTodos)
+}
+```
 
-   updatetodo is a little tricky because before we can 
-   change the todo we need to find the todo we want to 
-   update first then update it.  Array.prototype.findIndex
-   will return to us an index in the array based on a 
-   boolean test.  In this case we use the id to match 
-   uniqueness to.  If a match is found it gets returned.
+---
 
-   Using the returned index the changed todo passed into 
-   the updateTodo method can overwrite the right todo 
-   by passing it to the todos array.  
+`filterSearch()` takes in a string or number. If it's a number it uses
+the Array.prototype.filter method to check if the searched
+priority number matches the input value passed in.
+if the value is a string it filters down the todos by looking
+at the text property and sends back all results that match
+any combination of characters. indexOf will return either the
+index or -1 which is coerced to false by javascript.
 
-  */
-
-  updateTodo(todo) {
-    const index = this.todos.findIndex(t => {
-      return t.id === todo.id
+```typescript
+filterSearch(value) {
+  if (!isNaN(value)) {
+    this.filteredTodos = this.todos.filter(
+      todo => parseInt(todo.priority, 10) === parseInt(value, 10)
+    )
+  } else if (typeof value === "string") {
+    this.filteredTodos = this.todos.filter(todo => {
+      return todo.text.toLowerCase().indexOf(value.toLowerCase()) > -1
     })
-
-    this.todos[index] = todo
-
-    localStorage.setItem("todos", JSON.stringify(this.todos))
-
-    return Promise.resolve(this.todos)
   }
 
-  /*
-    using filter you can match on the id of a todo and return 
-    the entire array except the one matched.  Another way to 
-    do this is with splice() but this is cleaner to read.  
+  // allows an empty thenable on the component side so things continue to work
+  // when we plug into a real api that will have latency associated with it.
+  return Promise.resolve()
+}
+```
 
-  */
+---
 
-  removeTodo(id) {
-    this.todos = this.todos.filter(todo => todo.id !== id)
-    localStorage.setItem("todos", JSON.stringify(this.todos))
-    return Promise.resolve(this.todos)
-  }
+`clearTodos()`resets the array to an empty array.
 
-  changePriority(event) {
-    if (event.operation === "+") {
-      event.todo.priority += 1
-    }
-    if (event.operation === "-") {
-      if (event.todo.priority > 0) {
-        event.todo.priority -= 1
-      }
-    }
-  }
-
-  getFilteredTodos() {
-    return Promise.resolve(this.filteredTodos)
-  }
-
-  /*
-    takes in a string or number.  If it's a number it uses 
-    the Array.prototype.filter method to check if the searched
-    priority number matches the input value passed in.  
-    if the value is a string it filters down the todos by looking
-    at the text property and sends back all results that match a 
-    any combination of characters.  indexOf will return either the 
-    index or -1 which is coerced to false by javascript. 
-  */
-
-  filterSearch(value) {
-    if (!isNaN(value)) {
-      this.filteredTodos = this.todos.filter(
-        todo => parseInt(todo.priority, 10) === parseInt(value, 10)
-      )
-    } else if (typeof value === "string") {
-      this.filteredTodos = this.todos.filter(todo => {
-        return todo.text.toLowerCase().indexOf(value.toLowerCase()) > -1
-      })
-    }
-
-    // allows an empty thenable on the component side so things continue to work
-    // when we plug into a real api that will have latency associated with it.
-    return Promise.resolve()
-  }
-
-  // reset the array to an empty array. Pretty straight forward.
-
+```typescript
   clearTodos() {
     localStorage.removeItem("todos")
     return Promise.resolve((this.todos = []))
   }
 }
+
 ```
+
+---
+
+[Show me the project code!](https://codesandbox.io/s/angular-2c6v2?fontsize=14&hidenavigation=1&theme=dark)
 
 ---
 
@@ -220,7 +245,7 @@ export class RepositoryService {
 
 I'm using [template variables](https://blog.angulartraining.com/tutorial-the-magic-of-template-reference-variables-3183f0a0d9d1) notated with hash symbols `#inputvalue` to grab the input values
 to pass to the component method `addTodo()` on `(click)` and on `(keyup.enter)`. You could also bind a property and use ngModel [banana in
-the box syntax](https://blog.angulartraining.com/tutorial-create-your-own-two-way-data-binding-in-angular-46487650ea82) `[()]` for two data binding.
+the box syntax](https://blog.angulartraining.com/tutorial-create-your-own-two-way-data-binding-in-angular-46487650ea82) `[()]` for two way data binding.
 
 I have defined methods for the following:
 
