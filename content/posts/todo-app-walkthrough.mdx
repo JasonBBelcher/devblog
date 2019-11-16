@@ -3,29 +3,29 @@ title: Angular Todo Application
 date: 2019-11-08
 ---
 
-A while back I took a survey on twitter to see what might be of interest.
+A while back, I posted a survey on twitter to see what might be of interest.
 
 ![twitter survey](./images/twitter-survey.png)
 
-Ajax and Rest api were neck and neck. Due to the results I've decided
+Ajax and Rest api were neck and neck. Due to the results, I've decided
 to cover the basics of a full stack application. Todo tutorials are plentiful
 for a reason. They are simple enough to convey concepts without getting too deep
-into the weeds but are complex enough to cover many of the real world things that
-every application needs.
+into the weeds, but are complex enough to cover many concepts found in real-world
+applications.
 
-I won't get into authentication or authorization this time. I think I got a little
-to ambitious in the tweet. :) I'll focus directly on just the core functionality
-of a todo app and all the crud actions it needs. The app is first built purely on
-the front end and persisted with localStorage. Then I create a back-end that
-will serve up todos and refactor the front end code to connect it up with AJAX.
+I won't get into authentication or authorization this time - I think I got a little
+too ambitious in the tweet. :) I'll focus directly on the todo app's core functionalities
+as well as all the CRUD operations. First, I build this app purely on
+the front-end, persisted with localStorage. Then, I create a back-end that
+will serve up todos. Lastly, I refactor the front-end code to connect it to the back-end with AJAX.
 
 ## Todo Entity Class
 
-First it is good to define the shape of the data you are dealing with. A simple
-class will work fine. In this case, all we are dealing with are simple Todos.  
+It is good to first define the shape of the data you are dealing with. A simple
+class will work fine since all we are dealing with are simple Todos.  
 What are the properties we might have for each todo?
 
-For my implementation I
+For my implementation, I
 decided it would be nice to have a priority so that todos can be searched by
 their importance. An id is useful to make each todo unique. Text is obviously
 the whole reason for a todo to exist and the completed property lets the user
@@ -72,10 +72,10 @@ export class Todo {
 
 ## Todo Service
 
-Next I create an angular service to handle all actions associated with Todos.
+Next, I create an angular service to handle all actions associated with Todos.
 Angular services are a great way to share functionality to other components.
-Right now we have no backend so all persistance will be done using [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
-available in all modern browsers. Later this mocked service will be replaced with the [api
+Right now, we have no backend so all persistance will be done using [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
+available in all modern browsers. Later, this mocked service will be replaced with the [api
 service that will talk to the Node Express todo api](./todo-app-part2).
 
 ---
@@ -104,8 +104,8 @@ private todos: Array<Todo> = JSON.parse(localStorage.getItem("todos")) || []
 
 ---
 
-createTodo takes in a string as input and pushes a new Todo Entity
-to the todos array. It passes in defaults of completed false and
+`createTodo()` takes in a string as input and pushes a new Todo Entity
+to the `todos` array. It passes in defaults of completed false and
 sets a default priority of zero. Then we refresh local storage to
 reflect the todos in memory.
 
@@ -138,12 +138,12 @@ getTodos() {
 
 ---
 
-Update Todo is a little tricky because before we can
+`updateTodo()` is a little tricky because before we can
 change the todo we need to find the todo we want to
 update first then update it. [Array.prototype.findIndex](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findIndex)
 will return to us an index in the array based on a
-boolean test. In this case we use the id to match
-uniqueness to. If a match is found it gets returned.
+boolean test. In this case, we use the id to match for
+uniqueness. If a match is found, it gets returned.
 
 Using the returned index the changed todo passed into
 the updateTodo method can overwrite the right todo
